@@ -3,6 +3,7 @@ import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../utils.js";
 import expressAsyncHanlder from "express-async-handler";
+import data from "../data.js";
 
 const userRouter = express.Router();
 
@@ -44,5 +45,15 @@ userRouter.post(
     });
   })
 );
+
+userRouter.post("/", (req, res) => {
+  for(let i of data.users){
+    const user = new User({
+      ...i
+    });
+    user.save();
+  }
+  return res.status(200);
+});
 
 export default userRouter;
