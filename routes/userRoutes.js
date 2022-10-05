@@ -1,7 +1,7 @@
 import express from "express";
 import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
-import { generateToken } from "../utils.js";
+import { generateToken, isAuth } from "../utils.js";
 import expressAsyncHanlder from "express-async-handler";
 import data from "../data.js";
 
@@ -47,13 +47,39 @@ userRouter.post(
 );
 
 userRouter.post("/", (req, res) => {
-  for(let i of data.users){
+  for (let i of data.users) {
     const user = new User({
-      ...i
+      ...i,
     });
     user.save();
   }
   return res.status(200);
 });
+
+userRouter.put(
+  "/profile",
+  isAuth,
+  expressAsyncHanlder(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (user) {
+      user.name = req.body.name || user.name;
+      user.email = req.body.email || user.email;
+      if (req.body.password) {
+        user.password = bcrypt.hashSync(req.body.password, 8);
+      }
+
+      const updatedUser = await user.save();
+      res.send({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        isAdmin: updatedUser.isAdmin,
+        token: generateToken(updatedUserm),
+      });
+    } else {
+      res.status(404).send({ message: "User not found" });
+    }
+  })
+);
 
 export default userRouter;
